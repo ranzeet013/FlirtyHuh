@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with Hori</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Arial", sans-serif;
+      background-color: black;
+      color: white;
+      display: flex;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: black;
+      padding: 20px;
+    }
+
+    .chat-box {
+      width: 375px;
+      height: 600px;
+      background-color: black;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid white;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: black;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .header img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .chat-section {
+      flex-grow: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .chat-message.user {
+      flex-direction: row-reverse;
+    }
+
+    .chat-message img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    .chat-message p {
+      background-color: #333333;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: white;
+      max-width: 70%;
+      margin: 0;
+    }
+
+    .chat-message.user p {
+      background-color: #555555;
+    }
+
+    .input-section {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      background-color: black;
+    }
+
+    .input-section input {
+      flex-grow: 1;
+      border: 1px solid white;
+      background-color: black;
+      font-size: 14px;
+      border-radius: 8px;
+      padding: 10px;
+      color: white;
+      outline: none;
+    }
+
+    .input-section button {
+      border: none;
+      background-color: #333333;
+      color: white;
+      font-size: 14px;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .input-section button:disabled {
+      background-color: #555555;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-box">
+      <div class="header">
+        <img src="/Users/Raneet/Desktop/untitled folder/Horimiya/image/—_ Hori Kyouko icons.jpeg" alt="Hori">
+        Chat with Hori
+      </div>
+
+      <div class="chat-section" id="chat-section"></div>
+
+      <div class="input-section">
+        <input type="text" id="user-input" placeholder="Type a message..." />
+        <button id="send-button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const userInput = document.getElementById("user-input");
+    const sendButton = document.getElementById("send-button");
+    const chatSection = document.getElementById("chat-section");
+
+    // Append messages to chat
+    function appendMessage(text, sender) {
+      const message = document.createElement("div");
+      message.classList.add("chat-message", sender);
+
+      const profileImg = document.createElement("img");
+      profileImg.src =
+        sender === "user"
+          ? "/Users/Raneet/Desktop/untitled folder/Horimiya/image/_ (1) copy.jpeg" // User image
+          : "/Users/Raneet/Desktop/untitled folder/Horimiya/image/—_ Hori Kyouko icons.jpeg"; // Hori image
+
+      const messageText = document.createElement("p");
+      messageText.textContent = text;
+
+      message.appendChild(profileImg);
+      message.appendChild(messageText);
+      chatSection.appendChild(message);
+
+      chatSection.scrollTop = chatSection.scrollHeight; // Auto-scroll to the latest message
+    }
+
+    // Send message and handle API response
+    async function sendMessage() {
+      const userMessage = userInput.value.trim();
+      if (!userMessage) return;
+
+      appendMessage(userMessage, "user");
+      userInput.value = "";
+      sendButton.disabled = true;
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/chat/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: userMessage }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.response) {
+          throw new Error("Invalid response format from server");
+        }
+
+        appendMessage(data.response, "bot");
+      } catch (error) {
+        console.error("Error:", error.message);
+        appendMessage("Something went wrong. Please try again later.", "bot");
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    // Event listeners for sending messages
+    sendButton.addEventListener("click", sendMessage);
+
+    userInput.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
